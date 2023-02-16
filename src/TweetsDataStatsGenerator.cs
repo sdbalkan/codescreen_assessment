@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 /**
  * Generates various statistics about the tweets data set returned by the given TweetsApiService instance.
@@ -9,7 +10,8 @@ namespace CodeScreen.Assessments.TweetsApi
     {
         private readonly TweetsApiService TweetsApiService;
 
-        public TweetDataStatsGenerator(TweetsApiService tweetsApiService) {
+        public TweetDataStatsGenerator(TweetsApiService tweetsApiService)
+        {
             TweetsApiService = tweetsApiService;
         }
 
@@ -22,9 +24,20 @@ namespace CodeScreen.Assessments.TweetsApi
          * @param userName the name of the user
          * @return the highest number of tweets that were created on a any given day by the given user
         */
-        public int GetMostTweetsForAnyDay(string userName) {
+        public int GetMostTweetsForAnyDay(string userName)
+        {
             //TODO Implement
-            throw new NotImplementedException();
+            var tweets = TweetsApiService.GetTweets(userName);
+            if (tweets != null)
+            {
+                return tweets.GroupBy(
+                    t => t.CreatedAt.ToShortDateString(), 
+                    t => t.Id, 
+                    (key, g) => new { Day = key, Count = g.Count() }
+                    ).Max(d => d.Count);
+            }
+
+            return 0;
         }
 
         /**
@@ -36,9 +49,12 @@ namespace CodeScreen.Assessments.TweetsApi
          * @param userName the name of the user
          * @return the ID of longest tweet for the given user
         */
-        public string GetLongestTweet(string userName) {
+        public string GetLongestTweet(string userName)
+        {
             //TODO Implement
-            throw new NotImplementedException();
+            var tweets = TweetsApiService.GetTweets(userName);
+
+            return tweets?.OrderByDescending(t => t.Text.Length)?.First()?.Id;
         }
 
         /**
@@ -51,9 +67,25 @@ namespace CodeScreen.Assessments.TweetsApi
          * @param userName the name of the user
          * @return the most number of days between tweets by the given user
         */
-        public int FindMostDaysBetweenTweets(string userName) {
+        public int FindMostDaysBetweenTweets(string userName)
+        {
             //TODO Implement
-            throw new NotImplementedException();
+            var tweets = TweetsApiService.GetTweets(userName);
+            tweets = tweets.OrderBy(t => t.CreatedAt).ToList();
+            var mostDays = 0;
+
+            for (int i = 1; i < tweets.Count(); i++)
+            {
+                var preTweet = tweets[i - 1];
+                var tweet = tweets[i];
+                var days = (tweet.CreatedAt - preTweet.CreatedAt).Days;
+                if (days > mostDays)
+                {
+                    mostDays = days;
+                }
+            }
+
+            return mostDays;
         }
 
         /**
@@ -66,9 +98,16 @@ namespace CodeScreen.Assessments.TweetsApi
          * @param userName the name of the user
          * @return the most popular hash tag tweeted by the given user.
         */
-        public string GetMostPopularHashTag(string userName) {
+        public string GetMostPopularHashTag(string userName)
+        {
             //TODO Implement
-            throw new NotImplementedException();
+            var tweets = TweetsApiService.GetTweets(userName);
+
+            return tweets.Select(t => t.Text.Split(' ').Last())
+                        .Where(w => w[0] == '#')
+                        .GroupBy(h => h, h => h, (key, g) => new { HashTag = key, Count = g.Count() })
+                        .OrderByDescending(g => g.Count)
+                        .First().HashTag;
         }
 
     }
