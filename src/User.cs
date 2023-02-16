@@ -9,10 +9,8 @@ namespace CodeScreen.Assessments.TweetsApi.src
 {
     public class User
     {
-        [JsonPropertyName("id")]
         public string Id { get; set; }
 
-        [JsonPropertyName("userName")]
         public string UserName { get; set; }
     }
 }
